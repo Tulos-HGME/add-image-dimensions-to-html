@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: babashka/babashka.pods:0.0.1">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/babashka/babashka.pods/0.0.1/babashka.pods-0.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

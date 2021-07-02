@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: tubular:1.4.0">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/tubular/tubular/1.4.0/tubular-1.4.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
