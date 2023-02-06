@@ -11,6 +11,7 @@
 (deps/add-deps '{:deps {org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
                                                  :sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}
                         cli-matic/cli-matic {:mvn/version "0.5.4"}}})
+(require '[cli-matic.core :refer [run-cmd]])
 
 
 (def hgme-root (str (System/getProperty "user.home") "/Dropbox/Shared SBI/HGME UYOH/"))
@@ -178,11 +179,29 @@
   :_)
 
 
-(defn -main
-  []
-  (let [files *command-line-args*]
-    (doseq [f files]
-      (update-file! f))))
+
+(defn update-files!
+  [{:keys [_arguments]}]
+  (if (seq _arguments)
+    (let [files _arguments]
+      (doseq [f files]
+        (update-file! f)))
+    (println "Error: You must specify one or more html files.\nTo see examples, run\nadd_images_dimensions_to_html.clj --help")))
+
+
+
+(def CONFIGURATION
+  {:command "add_images_dimensions_to_html.clj"
+   :description "Update width and height tags in html files using actual image dimensions"
+   :opts []
+   :runs update-files!
+   :examples ["add_images_dimensions_to_html.clj path/to/file.html"
+              "add_images_dimensions_to_html.clj *.html"]})
+
+
+
+(defn -main []
+  (run-cmd *command-line-args* CONFIGURATION))
 
 
 ;; Run -main if invoked from the command line. See https://book.babashka.org/#main_file
