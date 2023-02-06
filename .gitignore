@@ -13,3 +13,6 @@ pom.xml.asc
 .hg/
 !downloaded
 z downloaded
+.clj-kondo
+.idea
+add-image-dimensions-to-html.iml
