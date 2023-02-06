@@ -51,13 +51,19 @@
   width          - int or str
   height         - int or str"
   [{:keys [img-tag width height]}]
+  (let [new-img-tag
   (-> img-tag
       (enlive/at ,,, [:img]
                  (enlive/do->
                    (enlive/set-attr :width (str width))
                    (enlive/set-attr :height (str height))))
       ;; Enlive makes pinit lower case so we need to convert it back to uppercase
-      (str/replace ,,, "***pinit***" "***PINIT***")))
+            (str/replace ,,, "***pinit***" "***PINIT***"))]
+    ;; Close the img tag the same way as the original tag, i.e. > or />. Otherwise enlive
+    ;; always changes the closing tag to plain >
+    (if (str/ends-with? img-tag "/>")
+      (str/replace new-img-tag ">" "/>")
+      new-img-tag)))
 (comment
   (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
                    :width 300
