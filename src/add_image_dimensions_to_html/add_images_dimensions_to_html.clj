@@ -189,7 +189,7 @@
   (shell/sh
     "cp"
     (str (System/getProperty "user.dir") "/src/add_image_dimensions_to_html/add_images_dimensions_to_html.clj")
-    "/Users/tobiaslocsei/bin")
+    "/Users/tobiaslocsei/Dropbox/Tobs documents/Programming/bin")
   :_)
 
 
