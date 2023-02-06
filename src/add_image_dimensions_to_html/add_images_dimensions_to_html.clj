@@ -14,11 +14,14 @@
 (def example-html (slurp "/Users/tobiaslocsei/Dropbox/Shared SBI/HGME UYOH/dog-coloring-pages.html"))
 
 
+(def img-tag-re #"(?s)<img.*?>")
+
+
 (defn img-tags
   "Given html as a string return a list of all the image tags in a string.
   Works even when the image tag contains newlines."
   [html-string]
-  (re-seq #"(?s)<img.*?>" html-string))
+  (re-seq img-tag-re html-string))
 (comment
   (img-tags "blah blah <img src=\"foo.jpg\"> blah <img src=\"bar.jpg\"> blah")
   ; => ("<img src=\"foo.jpg\">" "<img src=\"bar.jpg\">")
