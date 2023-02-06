@@ -143,7 +143,7 @@
   and return the new string.
   The height and width are found by looking up the image on the local disk"
   [html-str]
-  (str/replace html-str #"(?s)<img.*?>" update-img-tag))
+  (str/replace html-str img-tag-re update-img-tag))
 (comment
   (println (update-html example-html))
   (println (update-html (slurp "/Users/tobiaslocsei/Dropbox/Shared SBI/HGME UYOH/birthday-wishes.html")))
