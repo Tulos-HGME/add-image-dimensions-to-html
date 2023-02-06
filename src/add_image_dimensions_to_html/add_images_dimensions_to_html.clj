@@ -104,6 +104,7 @@
   (dimensions (str hgme-root "image-files/fathers-day-coloring-pages-400x352.png"))
   ; => [400 352]
   (dimensions (str hgme-root "this-path-does-not-exist")) ; => nil
+  (dimensions "/Users/tobiaslocsei/Dropbox/Shared SBI/HGME UYOH/image-files/40th-birthday-ideas-gifts-for-women-600x800.jpg")
   :_)
 
 
