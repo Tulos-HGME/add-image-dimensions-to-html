@@ -1,5 +1,5 @@
 #!/usr/bin/env bb
-(ns add-image-dimensions-to-html.add-images-dimensions-to-html
+(ns add-image-dimensions-to-html
   (:require [babashka.deps :as deps]
             [babashka.pods :as pods]
             [clojure.edn :as edn]
@@ -60,9 +60,9 @@
   (let [new-img-tag
         (-> img-tag
             (enlive/at ,,, [:img]
-                       (enlive/do->
-                         (enlive/set-attr :width (str width))
-                         (enlive/set-attr :height (str height))))
+                           (enlive/do->
+                             (enlive/set-attr :width (str width))
+                             (enlive/set-attr :height (str height))))
             ;; Enlive makes pinit lower case so we need to convert it back to uppercase
             (str/replace ,,, "***pinit***" "***PINIT***"))]
     ;; Close the img tag the same way as the original tag, i.e. > or />. Otherwise enlive
