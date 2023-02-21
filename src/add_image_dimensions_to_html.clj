@@ -65,22 +65,36 @@
                              (enlive/set-attr :height (str height))))
             ;; Enlive makes pinit lower case so we need to convert it back to uppercase
             (str/replace ,,, "***pinit***" "***PINIT***"))]
-    ;; Close the img tag the same way as the original tag, i.e. > or />. Otherwise enlive
-    ;; always changes the closing tag to plain >
-    (if (str/ends-with? img-tag "/>")
-      (str/replace new-img-tag ">" "/>")
-      new-img-tag)))
+    ;; Close the img tag the same way as the original tag, i.e. > or />, including the preceding space
+    ;; (or lack of).
+    ;; Otherwise enlive always changes the closing tag to plain > with no space before it
+    (cond
+      (str/ends-with? img-tag " />") (str/replace new-img-tag ">" " />")
+      (str/ends-with? img-tag "/>") (str/replace new-img-tag ">" "/>")
+      (str/ends-with? img-tag " >") (str/replace new-img-tag ">" " >")
+      :else new-img-tag)))
 (comment
   (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
                    :width 300
                    :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">"
 
+  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" >"
+                   :width 300
+                   :height 400})
+  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" >"
+
   ;; Check that it works when the tag closes with /> instead of >
   (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\"/>"
                    :width 300
                    :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\"/>"
+
+  ;; Check that it works when the tag closes with /> with a preceding space
+  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" />"
+                   :width 300
+                   :height 400})
+  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" />"
   :_)
 
 
