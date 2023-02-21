@@ -1,12 +1,12 @@
 #!/usr/bin/env bb
 (ns add-image-dimensions-to-html
   (:require [babashka.deps :as deps]
-            [babashka.pods :as pods]
+            #_[babashka.pods :as pods]
             [clojure.edn :as edn]
             [clojure.java.shell :as shell]
             [clojure.string :as str]))
-(pods/load-pod "bootleg")
-(require '[pod.retrogradeorbit.bootleg.enlive :as enlive])
+;(pods/load-pod "bootleg")
+;(require '[pod.retrogradeorbit.bootleg.enlive :as enlive])
 
 (deps/add-deps '{:deps {org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
                                                  :sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}
@@ -50,52 +50,163 @@
   :_)
 
 
-(defn set-dimensions
+(defn append-attribute
+  "Given image tag as a string, append the given attribute"
+  [img-tag-str attr-name-str attr-value]
+  (let [s (str attr-name-str "=\"" attr-value "\"")]
+    (cond
+      (str/ends-with? img-tag-str " />")
+      (str/replace img-tag-str " />" (str " " s " />"))
+
+      (str/ends-with? img-tag-str "/>")
+      (str/replace img-tag-str "/>" (str " " s "/>"))
+
+      (str/ends-with? img-tag-str " >")
+      (str/replace img-tag-str " >" (str " " s " >"))
+
+      :else
+      (str/replace img-tag-str ">" (str " " s ">")))))
+(comment
+  (println (append-attribute "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">" "width" 300))
+  ;; <img src="foo.jpg" ***PINIT***="Pin me!" width="300">
+
+  (println (append-attribute "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" >" "width" 300))
+  ;; <img src="foo.jpg" ***PINIT***="Pin me!" width="300" >
+
+  (println (append-attribute "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\"/>" "width" 300))
+  ;; <img src="foo.jpg" ***PINIT***="Pin me!" width="300"/>
+
+  (println (append-attribute "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" />" "width" 300))
+  ;; <img src="foo.jpg" ***PINIT***="Pin me!" width="300" />
+  :_)
+
+
+(defn update-attribute
+  "Given an image tag as a string, update the given attribute. Throws an error if attribute not found"
+  [img-tag-str attr-name-str attr-value]
+  (let [match (re-pattern (str attr-name-str "=" "\\\".+?\\\""))
+        replacement (str attr-name-str "=\"" attr-value "\"")]
+    (str/replace img-tag-str match replacement)))
+(comment
+  (update-attribute "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">"
+                    "width" 500)
+  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"500\" height=\"400\">"
+  (update-attribute "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">"
+                    "height" 600)
+  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"600\">"
+  :_)
+
+
+(defn has-attribute?
+  "Check whether image tag has attribute"
+  [img-tag-str attr-name-str]
+  (let [re (re-pattern (str attr-name-str "=" "\\\".+?\\\""))]
+    (some? (re-find re img-tag-str))))
+(comment
+  (has-attribute? "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">" "width") ; => true
+  (has-attribute? "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" height=\"400\">" "width") ; => false
+  :_)
+
+
+(defn set-attribute
+  "Update or append attribute on image tag"
+  [img-tag-str attr-name-str attr-value]
+  (if (has-attribute? img-tag-str attr-name-str)
+    (update-attribute img-tag-str attr-name-str attr-value)
+    (append-attribute img-tag-str attr-name-str attr-value)))
+(comment
+  (set-attribute "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">" "height" 500)
+  ; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"500\">"
+  (set-attribute "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\">" "height" 500)
+  ; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"500\">"
+  (-> "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
+      (set-attribute ,,, "width" 300)
+      (set-attribute ,,, "height" 400))
+  ; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">"
+  :_)
+
+
+(defn set-dimensions-2
   "Given an image tag as a string, set the width and height attributes, while
   making sure to preserve the capitalisation of the ***PINIT*** tag.
   img-tag        - str
   width          - int or str
   height         - int or str"
   [{:keys [img-tag width height]}]
-  (let [new-img-tag
-        (-> img-tag
-            (enlive/at ,,, [:img]
-                           (enlive/do->
-                             (enlive/set-attr :width (str width))
-                             (enlive/set-attr :height (str height))))
-            ;; Enlive makes pinit lower case so we need to convert it back to uppercase
-            (str/replace ,,, "***pinit***" "***PINIT***"))]
-    ;; Close the img tag the same way as the original tag, i.e. > or />, including the preceding space
-    ;; (or lack of).
-    ;; Otherwise enlive always changes the closing tag to plain > with no space before it
-    (cond
-      (str/ends-with? img-tag " />") (str/replace new-img-tag ">" " />")
-      (str/ends-with? img-tag "/>") (str/replace new-img-tag ">" "/>")
-      (str/ends-with? img-tag " >") (str/replace new-img-tag ">" " >")
-      :else new-img-tag)))
+  (-> img-tag
+      (set-attribute ,,, "width" width)
+      (set-attribute ,,, "height" height)))
 (comment
-  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
-                   :width 300
-                   :height 400})
+  (set-dimensions-2 {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
+                     :width 300
+                     :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">"
 
-  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" >"
-                   :width 300
-                   :height 400})
+  (set-dimensions-2 {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" >"
+                     :width 300
+                     :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" >"
 
   ;; Check that it works when the tag closes with /> instead of >
-  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\"/>"
-                   :width 300
-                   :height 400})
+  (set-dimensions-2 {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\"/>"
+                     :width 300
+                     :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\"/>"
 
   ;; Check that it works when the tag closes with /> with a preceding space
-  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" />"
-                   :width 300
-                   :height 400})
+  (set-dimensions-2 {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" />"
+                     :width 300
+                     :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" />"
   :_)
+
+
+;(defn set-dimensions
+;  "Given an image tag as a string, set the width and height attributes, while
+;  making sure to preserve the capitalisation of the ***PINIT*** tag.
+;  img-tag        - str
+;  width          - int or str
+;  height         - int or str"
+;  [{:keys [img-tag width height]}]
+;  (let [new-img-tag
+;        (-> img-tag
+;            (enlive/at ,,, [:img]
+;                           (enlive/do->
+;                             (enlive/set-attr :width (str width))
+;                             (enlive/set-attr :height (str height))))
+;            ;; Enlive makes pinit lower case so we need to convert it back to uppercase
+;            (str/replace ,,, "***pinit***" "***PINIT***"))]
+;    ;; Close the img tag the same way as the original tag, i.e. > or />, including the preceding space
+;    ;; (or lack of).
+;    ;; Otherwise enlive always changes the closing tag to plain > with no space before it
+;    (cond
+;      (str/ends-with? img-tag " />") (str/replace new-img-tag ">" " />")
+;      (str/ends-with? img-tag "/>") (str/replace new-img-tag ">" "/>")
+;      (str/ends-with? img-tag " >") (str/replace new-img-tag ">" " >")
+;      :else new-img-tag)))
+;(comment
+;  (println (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
+;                            :width 300
+;                            :height 400}))
+;  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">"
+;
+;  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" >"
+;                   :width 300
+;                   :height 400})
+;  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" >"
+;
+;  ;; Check that it works when the tag closes with /> instead of >
+;  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\"/>"
+;                   :width 300
+;                   :height 400})
+;  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\"/>"
+;
+;  ;; Check that it works when the tag closes with /> with a preceding space
+;  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" />"
+;                   :width 300
+;                   :height 400})
+;  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" />"
+;  :_)
 
 
 (defn dimensions
@@ -105,7 +216,7 @@
   (let [sips-result (shell/sh "sips"
                               "-g" "pixelWidth" "-g" "pixelHeight"
                               path-str)]
-    (if-not (= 0 (:exit sips-result))
+    (if (or (= 1 (:exit sips-result)) (not-empty (:err sips-result)))
       (do
         ;; Print warning and return nil if there's an error computing image dimensions
         (println (:err sips-result))
@@ -137,9 +248,9 @@
       ;; Return image tag unchanged if it refers to a non-HGME image
       img-tag-str
       (if-let [[w h] (dimensions (str hgme-root src))]
-        (set-dimensions {:img-tag img-tag-str
-                         :width w
-                         :height h})
+        (set-dimensions-2 {:img-tag img-tag-str
+                           :width w
+                           :height h})
         ;; Return img-tag-str unchanged if dimensions could not be found
         img-tag-str))))
 (comment
