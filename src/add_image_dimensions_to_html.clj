@@ -223,12 +223,12 @@
   (-main))
 
 
-;; Copy script to /bin folder
+;; Copy script to /bin folder. Note slightly different name in bin folder than here for historical reasons.
 (comment
   (shell/sh
     "cp"
-    (str (System/getProperty "user.dir") "/src/add_image_dimensions_to_html/add_images_dimensions_to_html.clj")
-    "/Users/tobiaslocsei/Dropbox/Tobs documents/Programming/bin")
+    (str (System/getProperty "user.dir") "/src/add_image_dimensions_to_html.clj")
+    "/Users/tobiaslocsei/Dropbox/Tobs documents/Programming/bin/add_images_dimensions_to_html.clj")
   :_)
 
 
