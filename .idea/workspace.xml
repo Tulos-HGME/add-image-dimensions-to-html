@@ -80,6 +80,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9b9b6bc4-0335-4d7b-93f0-c0ef4fcf05c4" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/add_image_dimensions_to_html.clj" beforeDir="false" afterPath="$PROJECT_DIR$/src/add_image_dimensions_to_html.clj" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -121,7 +122,7 @@
     &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;
   }
 }</component>
-  <component name="ReplState" timestamp="1677114144159">{:repl-history {:ide [], :local [], :remote []}}</component>
+  <component name="ReplState" timestamp="1684711470667">{:repl-history {:ide [], :local [], :remote []}}</component>
   <component name="RunManager">
     <configuration name="Babashka" type="Babashka" factoryName="BabashkaLocalRepl" activateToolWindowBeforeRun="false">
       <module name="add-image-dimensions-to-html" />

@@ -1,6 +1,7 @@
 #!/usr/bin/env bb
 (ns add-image-dimensions-to-html
   (:require [babashka.deps :as deps]
+            [babashka.fs :as fs]
             [clojure.edn :as edn]
             [clojure.java.shell :as shell]
             [clojure.string :as str]))
@@ -31,7 +32,7 @@
   (count (img-tags example-html))
   (count (distinct (img-tags example-html)))
   (println (first (img-tags example-html)))
-  (run! println (img-tags (slurp "/Users/tobiaslocsei/Dropbox/Shared SBI/HGME UYOH/birthday-wishes.html")))
+  (run! println (img-tags (slurp (str hgme-root "birthday-wishes.html"))))
   :_)
 
 
@@ -184,50 +185,54 @@
   (dimensions (str hgme-root "image-files/fathers-day-coloring-pages-400x352.png"))
   ; => [400 352]
   (dimensions (str hgme-root "this-path-does-not-exist")) ; => nil
-  (dimensions "/Users/tobiaslocsei/Dropbox/Shared SBI/HGME UYOH/image-files/40th-birthday-ideas-gifts-for-women-600x800.jpg")
+  (dimensions (str hgme-root "image-files/40th-birthday-ideas-gifts-for-women-600x800.jpg"))
+  ; => [600 800]
   :_)
 
 
 (defn update-img-tag
-  "Given an image tag string, return image tag str with added  height and width attributes.
-  The height and width are found by looking up the image on the local disk"
-  [img-tag-str]
+  "Given a html folder and an image tag string, return image tag str with added
+  height and width attributes. The height and width are found by looking up the image on the
+  local disk inside the given html folder"
+  [html-folder img-tag-str]
   (let [src (img-src img-tag-str)]
     (if-not (str/starts-with? src "image-files/") ;;
       ;; Return image tag unchanged if it refers to a non-HGME image
       img-tag-str
-      (if-let [[w h] (dimensions (str hgme-root src))]
+      (if-let [[w h] (dimensions (str (fs/path html-folder src)))]
         (set-dimensions-2 {:img-tag img-tag-str
                            :width w
                            :height h})
         ;; Return img-tag-str unchanged if dimensions could not be found
         img-tag-str))))
 (comment
-  (update-img-tag "<img ***PINIT***=\"235 Happy Birthday Wishes &amp; Quotes\" alt=\"birthday wishes\" src=\"image-files/birthday-wishes-for-friend-its-time-to-shine-1080x720.png\"/>")
+  (update-img-tag hgme-root "<img ***PINIT***=\"235 Happy Birthday Wishes &amp; Quotes\" alt=\"birthday wishes\" src=\"image-files/birthday-wishes-for-friend-its-time-to-shine-1080x720.png\"/>")
   ; => "<img ***PINIT***=\"235 Happy Birthday Wishes &amp; Quotes\" alt=\"birthday wishes\" src=\"image-files/birthday-wishes-for-friend-its-time-to-shine-1080x720.png\" width=\"1080\" height=\"721\">"
 
-  (update-img-tag "<img src=\"image-files/i-do-not-exist.jpg\">")
+  (update-img-tag hgme-root "<img src=\"image-files/i-do-not-exist.jpg\">")
   ; => "<img src=\"image-files/i-do-not-exist.jpg\">"  (and warning printed to stdout)
 
-  (update-img-tag "<img src=\"images/i-am-not-in-the-right-folder.jpg\">")
+  (update-img-tag hgme-root "<img src=\"images/i-am-not-in-the-right-folder.jpg\">")
   ; => "<img src=\"images/i-am-not-in-the-right-folder.jpg\">"
 
-  (update-img-tag "<img src=\"www.another-domain.com/image.jpg\">")
+  (update-img-tag hgme-root "<img src=\"www.another-domain.com/image.jpg\">")
   ; => "<img src=\"www.another-domain.com/image.jpg\">"
 
-  (update-img-tag (last (img-tags (slurp "/Users/tobiaslocsei/Dropbox/Shared SBI/HGME UYOH/birthday-wishes.html"))))
+  (update-img-tag hgme-root (last (img-tags (slurp (str hgme-root "birthday-wishes.html")))))
   :_)
 
 
 (defn update-html
-  "Given an html string, update all image tags to include width and height attributes
-  and return the new string.
-  The height and width are found by looking up the image on the local disk"
-  [html-str]
-  (str/replace html-str img-tag-re update-img-tag))
+  "Given an html file path, slurp the file, update all image tags to include width and height attributes
+  and return a string of the updated html.
+  The height and width are found by looking up the dimensions of the images on the local disk"
+  [html-file-path]
+  (let [html-str (slurp (fs/file html-file-path))
+        html-folder (fs/parent html-file-path)]
+    (str/replace html-str img-tag-re #(update-img-tag html-folder %))))
 (comment
-  (println (update-html example-html))
-  (println (update-html (slurp "/Users/tobiaslocsei/Dropbox/Shared SBI/HGME UYOH/birthday-wishes.html")))
+  (println (update-html (str hgme-root "dog-coloring-pages.html")))
+  (println (update-html (str hgme-root "birthday-wishes.html")))
   :_)
 
 
@@ -238,7 +243,7 @@
   [html-file-path]
   (println "Checking" html-file-path)
   (let [html-str (slurp html-file-path)
-        updated-html-str (update-html html-str)]
+        updated-html-str (update-html html-file-path)]
     (if (= html-str updated-html-str)
       (println "No changes made\n")
       (do
@@ -253,25 +258,22 @@
   :_)
 
 
-
 (defn update-files!
   [{:keys [_arguments]}]
   (if (seq _arguments)
     (let [files _arguments]
       (doseq [f files]
         (update-file! f)))
-    (println "Error: You must specify one or more html files.\nTo see examples, run\nadd_images_dimensions_to_html.clj --help")))
-
+    (println "Error: You must specify one or more html files.\nTo see examples, run\nadd_image_dimensions_to_html.clj --help")))
 
 
 (def CONFIGURATION
-  {:command "add_images_dimensions_to_html.clj"
+  {:command "add_image_dimensions_to_html.clj"
    :description "Update width and height tags in html files using actual image dimensions"
    :opts []
    :runs update-files!
-   :examples ["add_images_dimensions_to_html.clj path/to/file.html"
-              "add_images_dimensions_to_html.clj *.html"]})
-
+   :examples ["add_image_dimensions_to_html.clj path/to/file.html"
+              "add_image_dimensions_to_html.clj *.html"]})
 
 
 (defn -main []
