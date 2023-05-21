@@ -334,12 +334,15 @@
   (-main))
 
 
-;; Copy script to /bin folder. Note slightly different name in bin folder than here for historical reasons.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Run comment below to copy script to /bin folder
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (comment
-  (shell/sh
-    "cp"
-    (str (System/getProperty "user.dir") "/src/add_image_dimensions_to_html.clj")
-    "/Users/tobiaslocsei/Dropbox/Tobs documents/Programming/bin/add_images_dimensions_to_html.clj")
+  (let [clj-file-name (str (str/replace *ns* "-" "_") ".clj")
+        source (str (System/getProperty "user.dir") "/src/" clj-file-name)
+        destination (str "/Users/tobiaslocsei/Dropbox/Tobs documents/Programming/bin/" clj-file-name)]
+    (println (str "Copying\n" source "\nto\n" destination))
+    (shell/sh "cp" source destination))
   :_)
-
-
