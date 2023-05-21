@@ -1,12 +1,9 @@
 #!/usr/bin/env bb
 (ns add-image-dimensions-to-html
   (:require [babashka.deps :as deps]
-            #_[babashka.pods :as pods]
             [clojure.edn :as edn]
             [clojure.java.shell :as shell]
             [clojure.string :as str]))
-;(pods/load-pod "bootleg")
-;(require '[pod.retrogradeorbit.bootleg.enlive :as enlive])
 
 (deps/add-deps '{:deps {org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
                                                  :sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}
@@ -159,54 +156,6 @@
                      :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" />"
   :_)
-
-
-;(defn set-dimensions
-;  "Given an image tag as a string, set the width and height attributes, while
-;  making sure to preserve the capitalisation of the ***PINIT*** tag.
-;  img-tag        - str
-;  width          - int or str
-;  height         - int or str"
-;  [{:keys [img-tag width height]}]
-;  (let [new-img-tag
-;        (-> img-tag
-;            (enlive/at ,,, [:img]
-;                           (enlive/do->
-;                             (enlive/set-attr :width (str width))
-;                             (enlive/set-attr :height (str height))))
-;            ;; Enlive makes pinit lower case so we need to convert it back to uppercase
-;            (str/replace ,,, "***pinit***" "***PINIT***"))]
-;    ;; Close the img tag the same way as the original tag, i.e. > or />, including the preceding space
-;    ;; (or lack of).
-;    ;; Otherwise enlive always changes the closing tag to plain > with no space before it
-;    (cond
-;      (str/ends-with? img-tag " />") (str/replace new-img-tag ">" " />")
-;      (str/ends-with? img-tag "/>") (str/replace new-img-tag ">" "/>")
-;      (str/ends-with? img-tag " >") (str/replace new-img-tag ">" " >")
-;      :else new-img-tag)))
-;(comment
-;  (println (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
-;                            :width 300
-;                            :height 400}))
-;  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">"
-;
-;  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" >"
-;                   :width 300
-;                   :height 400})
-;  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" >"
-;
-;  ;; Check that it works when the tag closes with /> instead of >
-;  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\"/>"
-;                   :width 300
-;                   :height 400})
-;  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\"/>"
-;
-;  ;; Check that it works when the tag closes with /> with a preceding space
-;  (set-dimensions {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" />"
-;                   :width 300
-;                   :height 400})
-;  ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" />"
-;  :_)
 
 
 (defn dimensions
