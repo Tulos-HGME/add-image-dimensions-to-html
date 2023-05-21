@@ -162,29 +162,16 @@
 (defn dimensions
   "Given path of image file as str, return vector [w h] of dimensions.
   Return nil if dimensions cannot be calculated (e.g. if file not found)"
-  [path-str]
-  (let [sips-result (shell/sh "sips"
-                              "-g" "pixelWidth" "-g" "pixelHeight"
-                              path-str)]
-    (if (or (= 1 (:exit sips-result)) (not-empty (:err sips-result)))
+  [file-path]
+  (let [{:keys [exit out err]} (shell/sh "magick" "identify" "-format" "[%w %h]" file-path)]
+    (if (= 1 exit)
       (do
         ;; Print warning and return nil if there's an error computing image dimensions
-        (println (:err sips-result))
+        (println err)
         nil)
-      (let [[width-line height-line] (->> (:out sips-result)
-                                          (str/split-lines ,,,)
-                                          (drop 1 ,,,))
-            width (->> (str/split width-line #": ")
-                       (second ,,,)
-                       (edn/read-string ,,,))
-            height (->> (str/split height-line #": ")
-                        (second ,,,)
-                        (edn/read-string ,,,))]
-        [width height]))))
+      (edn/read-string out))))
 (comment
-  (dimensions (str hgme-root "image-files/fathers-day-coloring-pages-400x352.png"))
-  ; => [400 352]
-  (dimensions (str hgme-root "this-path-does-not-exist")) ; => nil
+  (dimensions (str hgme-root "this-path-does-not-exist")) ; => nil (and prints warning to stdout)
   (dimensions (str hgme-root "image-files/40th-birthday-ideas-gifts-for-women-600x800.jpg"))
   ; => [600 800]
   :_)
