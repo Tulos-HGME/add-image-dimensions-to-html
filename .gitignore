@@ -1,2 +1,5 @@
 .clj-kondo
 .idea/workspace.xml
+.cpcache
+*.iml
+.idea
