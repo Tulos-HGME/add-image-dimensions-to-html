@@ -1,21 +1,28 @@
 #!/usr/bin/env bb
 (ns add-image-dimensions-to-html
+  "A script to check that all the <img ...> tags in an HTML file have the correct width and attributes.
+  Having correct width and height attributes helps with reducing cumulative layout shift (CLS) on a page,
+  which is part of Google's Core Web Vitals score and may help slightly with rankings. It also improves
+  the user experience on a page because elements don't jump around as the page loads"
   (:require [babashka.deps :as deps]
             [babashka.fs :as fs]
             [clojure.edn :as edn]
             [clojure.java.shell :as shell]
             [clojure.string :as str]))
 
+
 (deps/add-deps '{:deps {org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
                                                  :sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}
                         cli-matic/cli-matic {:mvn/version "0.5.4"}}})
+
+
 (require '[cli-matic.core :refer [run-cmd]])
 
 
-(def hgme-root (str (System/getProperty "user.home") "/Dropbox/Shared SBI/HGME UYOH/"))
+(def hgme-root (str (System/getProperty "user.home") "/Dropbox/Shared SBI/HGME HTML Tulos/"))
 
 
-(def example-html (slurp "/Users/tobiaslocsei/Dropbox/Shared SBI/HGME UYOH/dog-coloring-pages.html"))
+(def example-html-file (fs/file (fs/path hgme-root "dog-coloring-pages.html")))
 
 
 (def img-tag-re #"(?s)<img.*?>")
@@ -29,9 +36,9 @@
 (comment
   (img-tags "blah blah <img src=\"foo.jpg\"> blah <img src=\"bar.jpg\"> blah")
   ; => ("<img src=\"foo.jpg\">" "<img src=\"bar.jpg\">")
-  (count (img-tags example-html))
-  (count (distinct (img-tags example-html)))
-  (println (first (img-tags example-html)))
+  (count (img-tags (slurp example-html-file)))
+  (count (distinct (img-tags (slurp example-html-file))))
+  (println (first (img-tags (slurp example-html-file))))
   (run! println (img-tags (slurp (str hgme-root "birthday-wishes.html"))))
   :_)
 
@@ -124,7 +131,7 @@
   :_)
 
 
-(defn set-dimensions-2
+(defn set-dimensions
   "Given an image tag as a string, set the width and height attributes, while
   making sure to preserve the capitalisation of the ***PINIT*** tag.
   img-tag        - str
@@ -135,26 +142,26 @@
       (set-attribute ,,, "width" width)
       (set-attribute ,,, "height" height)))
 (comment
-  (set-dimensions-2 {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
-                     :width 300
-                     :height 400})
+  (set-dimensions {:img-tag  "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\">"
+                   :width  300
+                   :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\">"
 
-  (set-dimensions-2 {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" >"
-                     :width 300
-                     :height 400})
+  (set-dimensions {:img-tag  "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" >"
+                   :width  300
+                   :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" >"
 
   ;; Check that it works when the tag closes with /> instead of >
-  (set-dimensions-2 {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\"/>"
-                     :width 300
-                     :height 400})
+  (set-dimensions {:img-tag  "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\"/>"
+                   :width  300
+                   :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\"/>"
 
   ;; Check that it works when the tag closes with /> with a preceding space
-  (set-dimensions-2 {:img-tag "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" />"
-                     :width 300
-                     :height 400})
+  (set-dimensions {:img-tag  "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" />"
+                   :width  300
+                   :height 400})
   ;; => "<img src=\"foo.jpg\" ***PINIT***=\"Pin me!\" width=\"300\" height=\"400\" />"
   :_)
 
@@ -187,9 +194,9 @@
       ;; Return image tag unchanged if it refers to a non-HGME image
       img-tag-str
       (if-let [[w h] (dimensions (str (fs/path html-folder src)))]
-        (set-dimensions-2 {:img-tag img-tag-str
-                           :width w
-                           :height h})
+        (set-dimensions {:img-tag  img-tag-str
+                         :width  w
+                         :height h})
         ;; Return img-tag-str unchanged if dimensions could not be found
         img-tag-str))))
 (comment
@@ -267,20 +274,19 @@
   (run-cmd *command-line-args* CONFIGURATION))
 
 
-;; Run -main if invoked from the command line. See https://book.babashka.org/#main_file
 (when (= *file* (System/getProperty "babashka.file"))
   (-main))
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Run comment below to copy script to /bin folder
+;; Run comment below to copy script to /bin folder (Tobias only)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (comment
   (let [clj-file-name (str (str/replace *ns* "-" "_") ".clj")
-        source (str (System/getProperty "user.dir") "/src/" clj-file-name)
-        destination (str "/Users/tobiaslocsei/Dropbox/Tobs documents/Programming/bin/" clj-file-name)]
+        source (fs/path (System/getProperty "user.dir") "src" clj-file-name)
+        destination (fs/path (System/getProperty "user.home")
+                      "Dropbox/Tobs documents/Programming/bin/" clj-file-name)]
     (println (str "Copying\n" source "\nto\n" destination))
-    (shell/sh "cp" source destination))
+    (fs/copy source destination {:replace-existing true}))
   :_)
