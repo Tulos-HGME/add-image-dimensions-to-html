@@ -280,6 +280,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Run comment below to copy script to /bin folder (Tobias only)
+;; Make sure original script in source folder is executable before running this
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (comment
@@ -288,5 +289,5 @@
         destination (fs/path (System/getProperty "user.home")
                       "Dropbox/Tobs documents/Programming/bin/" clj-file-name)]
     (println (str "Copying\n" source "\nto\n" destination))
-    (fs/copy source destination {:replace-existing true}))
+    (fs/copy source destination {:replace-existing true, :copy-attributes true}))
   :_)
