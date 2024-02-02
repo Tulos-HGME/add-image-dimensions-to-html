@@ -3,7 +3,11 @@
   "A script to check that all the <img ...> tags in an HTML file have the correct width and attributes.
   Having correct width and height attributes helps with reducing cumulative layout shift (CLS) on a page,
   which is part of Google's Core Web Vitals score and may help slightly with rankings. It also improves
-  the user experience on a page because elements don't jump around as the page loads"
+  the user experience on a page because elements don't jump around as the page loads.
+  User must have installed on their computer:
+  - Babashka
+  - Git
+  - ImageMagick"
   (:require [babashka.deps :as deps]
             [babashka.fs :as fs]
             [clojure.edn :as edn]
